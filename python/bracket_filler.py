@@ -1,19 +1,21 @@
 import game_picker
 from pathlib import Path
 
-def append_string(cur_string, new_string, append_to_front):
-    if append_to_front:
-        cur_string = new_string + cur_string
-    else:
-        cur_string += new_string
-    return cur_string
+PRINT_BLOCK_SIZE = 16
+JUSTIFY_LEFT = 0
+JUSTIFY_RIGHT = 1
+JUSTIFY_CENTER = 2
 
-def format_bracket_string(str, fill_char, end_with_pipe):
-    if end_with_pipe:
-        str = str.rjust(18, fill_char)
-    else:
-        str = str.ljust(18, fill_char)
-    return str
+def append_string(cur_string, new_string, append_to_left):
+    return new_string + cur_string if append_to_left else cur_string + new_string
+
+def format_bracket_string(str, fill_char, justify):
+    if justify == JUSTIFY_LEFT:
+        return str.ljust(PRINT_BLOCK_SIZE, fill_char)
+    elif justify == JUSTIFY_RIGHT:
+        return str.rjust(PRINT_BLOCK_SIZE, fill_char)
+    else: # JUSTIFY_CENTER
+        return str.center(PRINT_BLOCK_SIZE, fill_char)
 
 class BracketFiller:
     bracket_64 = [[None]  * 16 for x in range(0,4)] # 16 teams per region, 4 regions
@@ -28,7 +30,7 @@ class BracketFiller:
 
     def print_bracket(self):
         strings = [""] * 127
-        string_pad = " " * 18
+        string_pad = " " * PRINT_BLOCK_SIZE
         cur_string = 0
         
         cur_64_region = 0
@@ -42,10 +44,10 @@ class BracketFiller:
         cur_4_region = 0
         cur_2_region = 0
         for cur_string in range(0, 127):
-            right_side = cur_string >= 64
+            bracket_deco_justify = JUSTIFY_RIGHT if cur_string < 64 else JUSTIFY_LEFT
             # Populate every other string with round of 64
             if cur_string % 2 == 0:
-                strings[cur_string] = format_bracket_string(self.bracket_64[cur_64_region][cur_64_team][0], '-', right_side)
+                strings[cur_string] = format_bracket_string(self.bracket_64[cur_64_region][cur_64_team][0], '-', JUSTIFY_CENTER)
                 if cur_64_team == 15:
                     cur_64_region += 1
                     cur_64_team = 0
@@ -53,14 +55,14 @@ class BracketFiller:
                     cur_64_team += 1
              # Add bracket lines where necessary
             elif cur_string % 4 == 1:
-                strings[cur_string] = append_string(strings[cur_string], format_bracket_string("|", ' ', not right_side), right_side)
+                strings[cur_string] = append_string(strings[cur_string], format_bracket_string("|", ' ', bracket_deco_justify), cur_string >= 64)
             # Add spacing where necessary
             else:
                 strings[cur_string] = string_pad
 
             # Populate every 4th string (offset by 1) with round of 32
             if cur_string % 4 == 1:
-                strings[cur_string] = append_string(strings[cur_string], format_bracket_string(self.bracket_32[cur_32_region][cur_32_team][0], '-', right_side), right_side)
+                strings[cur_string] = append_string(strings[cur_string], format_bracket_string(self.bracket_32[cur_32_region][cur_32_team][0], '-', JUSTIFY_CENTER), cur_string >= 64)
                 if cur_32_team == 7:
                     cur_32_region += 1
                     cur_32_team = 0
@@ -68,14 +70,14 @@ class BracketFiller:
                     cur_32_team += 1
             # Add bracket lines where necessary
             elif cur_string % 8 > 1 and cur_string % 8 < 5:
-                strings[cur_string] = append_string(strings[cur_string], format_bracket_string("|", ' ', not right_side), right_side)
+                strings[cur_string] = append_string(strings[cur_string], format_bracket_string("|", ' ', bracket_deco_justify), cur_string >= 64)
             # Add spacing where necessary
             else:
-                strings[cur_string] = append_string(strings[cur_string], string_pad, right_side)
+                strings[cur_string] = append_string(strings[cur_string], string_pad, cur_string >= 64)
 
             # Populate every 8th string (offset by 3)  with sweet 16
             if cur_string % 8 == 3:
-                strings[cur_string] = append_string(strings[cur_string], format_bracket_string(self.bracket_16[cur_16_region][cur_16_team][0], '-', right_side), right_side)
+                strings[cur_string] = append_string(strings[cur_string], format_bracket_string(self.bracket_16[cur_16_region][cur_16_team][0], '-', JUSTIFY_CENTER), cur_string >= 64)
                 if cur_16_team == 3:
                     cur_16_region += 1
                     cur_16_team = 0
@@ -83,14 +85,14 @@ class BracketFiller:
                     cur_16_team += 1
             # Add bracket lines where necessary
             elif cur_string % 16 > 3 and cur_string % 16 < 11:
-                strings[cur_string] = append_string(strings[cur_string], format_bracket_string("|", ' ', not right_side), right_side)
+                strings[cur_string] = append_string(strings[cur_string], format_bracket_string("|", ' ', bracket_deco_justify), cur_string >= 64)
             # Add spacing where necessary
             else:
-                strings[cur_string] = append_string(strings[cur_string], string_pad, right_side)
+                strings[cur_string] = append_string(strings[cur_string], string_pad, cur_string >= 64)
 
             # Populate every 16th string (offset by 7)  with elite 8
             if cur_string % 16 == 7:
-                strings[cur_string] = append_string(strings[cur_string], format_bracket_string(self.bracket_8[cur_8_region][cur_8_team][0], '-', right_side), right_side)
+                strings[cur_string] = append_string(strings[cur_string], format_bracket_string(self.bracket_8[cur_8_region][cur_8_team][0], '-', JUSTIFY_CENTER), cur_string >= 64)
                 if cur_8_team == 1:
                     cur_8_region += 1
                     cur_8_team = 0
@@ -98,32 +100,35 @@ class BracketFiller:
                     cur_8_team += 1
             # Add bracket lines where necessary
             elif cur_string % 32 > 7 and cur_string % 32 < 23:
-                strings[cur_string] = append_string(strings[cur_string], format_bracket_string("|", ' ', not right_side), right_side)
+                strings[cur_string] = append_string(strings[cur_string], format_bracket_string("|", ' ', bracket_deco_justify), cur_string >= 64)
             # Add spacing where necessary
             else:
-                strings[cur_string] = append_string(strings[cur_string], string_pad, right_side)
+                strings[cur_string] = append_string(strings[cur_string], string_pad, cur_string >= 64)
 
             # Populate every 32nd string (offset by 15)  with final 4
             if cur_string % 32 == 15:
-                strings[cur_string] = append_string(strings[cur_string], format_bracket_string(self.bracket_4[cur_4_region][0], '-', right_side), right_side)
+                strings[cur_string] = append_string(strings[cur_string], format_bracket_string(self.bracket_4[cur_4_region][0], '-', JUSTIFY_CENTER), cur_string >= 64)
                 cur_4_region += 1
             # Add bracket lines where necessary
-            elif cur_string % 64 > 16 and cur_string % 64 < 48:
-                strings[cur_string] = append_string(strings[cur_string], format_bracket_string("|", ' ', not right_side), right_side)
+            elif cur_string % 64 > 15 and cur_string % 64 < 47:
+                strings[cur_string] = append_string(strings[cur_string], format_bracket_string("|", ' ', bracket_deco_justify), cur_string >= 64)
             # Add spacing where necessary
             else:
-                strings[cur_string] = append_string(strings[cur_string], string_pad, right_side)
+                strings[cur_string] = append_string(strings[cur_string], string_pad, cur_string >= 64)
 
             # Populate every 64th string (offset by 31)  with championship
             if cur_string % 64 == 31:
-                strings[cur_string] = append_string(strings[cur_string], format_bracket_string(self.bracket_2[cur_2_region][0], '-', right_side), right_side)
+                strings[cur_string] = append_string(strings[cur_string], format_bracket_string(self.bracket_2[cur_2_region][0], '-', JUSTIFY_CENTER), cur_string >= 64)
                 cur_2_region += 1
             else:
-                strings[cur_string] = append_string(strings[cur_string], string_pad, right_side)
+                strings[cur_string] = append_string(strings[cur_string], string_pad, cur_string >= 64)
 
-        # Populate 31st row with champion
-        strings[31] = append_string(strings[31], self.bracket_champ[0][0], False)
-
+            # Populate 31st row with champion
+            if cur_string == 31:
+                strings[cur_string] = append_string(strings[31], f"{self.bracket_champ[0][0]:^{PRINT_BLOCK_SIZE}}", False)
+            # Add spacing where necessary
+            elif cur_string < 63:
+                strings[cur_string] = append_string(strings[cur_string], string_pad, False)
 
 
 
