@@ -1,4 +1,5 @@
 import game_picker
+import sys
 from pathlib import Path
 
 PRINT_BLOCK_SIZE = 16
@@ -26,6 +27,10 @@ class BracketFiller:
     bracket_2 = [None] * 2 # Championship
     bracket_champ = [None]
     bracket_full = [bracket_64, bracket_32, bracket_16, bracket_8, bracket_4, bracket_2, bracket_champ]
+    bracket_year = 0
+
+    def __init__(self, year):
+        self.year = year
 
 
     def print_bracket(self):
@@ -132,15 +137,15 @@ class BracketFiller:
 
 
 
-        print_filepath = Path(__file__).parent / "../data/bracket.txt"
+        print_filepath = Path(__file__).parent / f"../data/{self.year}.brkt"
         f = open(print_filepath, "w")
 
         for i in range(0, 63):
             f.write(strings[i] + strings[i + 64] + "\n")
 
-    def read_bracket(self, csv_path):
+    def read_bracket(self, file_path):
         
-        abs_path = Path(__file__).parent / csv_path
+        abs_path = Path(__file__).parent / file_path
         f = open(abs_path)
         lines = f.readlines()
         cur_region = 0
@@ -178,7 +183,10 @@ class BracketFiller:
     
 
 if __name__ == "__main__":
-    bkt = BracketFiller()
-    bkt.read_bracket("../data/ncaa_mens_2022.csv")
-    bkt.fill_bracket()
-    bkt.print_bracket()
+    if len(sys.argv) > 1: 
+        bkt = BracketFiller(sys.argv[1])
+        bkt.read_bracket(f"../data/ncaa_mens_{sys.argv[1]}.txt")
+        bkt.fill_bracket()
+        bkt.print_bracket()
+    else:
+        print("ERROR: You must supply your desired bracket year.")
